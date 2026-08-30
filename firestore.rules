@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Règle pour la collection "messages"
+    match /messages/{messageId} {
+      // Seuls les utilisateurs authentifiés peuvent lire les messages
+      allow read: if request.auth != null;
+
+      // Seuls les utilisateurs authentifiés peuvent créer des messages,
+      // et ils doivent être l'auteur déclaré du message
+      allow create: if request.auth != null
+                    && request.resource.data.senderId == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 1000;
+
+      // Empêcher la modification ou la suppression directe
+      allow update, delete: if false;
+    }
+  }
+}
